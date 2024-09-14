@@ -2,10 +2,11 @@
 
 ## Description
 A finance tool made using the MERN stack
-- Secure login and registration using the PassportJS JWT strategy; passwords are hashed using bcrypt
-- Keep track of all your transactions displayed clearly in a table and charts using chartjs
+- Secure login and registration using the PassportJS JWT strategy; passwords are hashed using bcrypt.
+- Keep track of all your transactions displayed clearly in a table and charts using chartjs.
 - View price history and health index of hundreds of crypto coins
-and use the built in currency conversion tool
+and use the built in currency conversion tool.
+- Ask the crypto bot your cryptocurrency related queries. Custom plugin made using OnDemand platform by comibing several cryptocurrrency APIs.
 
 
 ## Demo
