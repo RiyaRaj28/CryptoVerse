@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Route, Switch} from "react-router-dom";
+import { BrowserRouter as Router, Route, Switch, Routes} from "react-router-dom";
 import Axios from 'axios';
 import './App.css';
 import Navbar from "./components/navbar.component";
@@ -10,6 +10,7 @@ import Login from "./components/login.component";
 import ExpenseTracker from "./components/expense-tracker.component";
 import Register from "./components/register.component";
 import CryptoDashboard from "./components/crypto-dashboard.component";
+import Chatbot from "./components/chatbot.component"
 
 function App() {
   const [loggedIn, setLoggedIn] = useState(false);
@@ -24,7 +25,7 @@ useEffect(() => {
                 'Authorization': localStorage.getItem('jwt'),
             }
         }).then(res=>{
-          console.log(res.data);
+          // console.log(res.data);
           setLoggedIn(res);
         })
         .catch(err => {
@@ -48,6 +49,7 @@ checkLoggedIn();
           <Route path="/register" exact component={Register} />
           <Route path="/app" exact component={ExpenseTracker} />
           <Route path="/crypto" exact component={CryptoDashboard} />
+          <Route path="/chatbot" exact component={Chatbot} />
 
 
         </Switch>

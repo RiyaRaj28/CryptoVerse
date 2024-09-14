@@ -1,5 +1,7 @@
 .App {
   text-align: center;
+  color: white;
+
 }
 
 .App-logo {
@@ -26,6 +28,12 @@
 .text-container{
   text-align: right;
   margin-top: 9rem;
+}
+.conversion-input-card {
+  max-width: 400px; /* Restrict the width of the card */
+  margin: 0 auto; /* Center the card horizontally */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Add a slight shadow for visual appeal */
+  border-radius: 8px; /* Rounded corners for a modern look */
 }
 
 /* text-shadow: 2px 2px 5px red; */

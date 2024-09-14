@@ -9,9 +9,8 @@ import ErrorModal from '../components/error-modal.component';
 
 import { Container,  Button, Col, Row, InputGroup, FormControl } from 'react-bootstrap';
 
-export default function CryptoDashboard() {
+const CryptoDashboard = () => {
     const [searchItem, setSearchItem] = useState("");
-
     const [coinName, setCoinName] = useState("");
     const [weeklyHistory, setWeeklyHistory] = useState({ x: [], y: [] });
     const [dailyHistory, setDailyHistory] = useState({ x: [], y: [] });
@@ -22,7 +21,7 @@ export default function CryptoDashboard() {
     const [healthIndex, setHealthIndex] = useState({ fcasRating: "N/A", fcasScore: "N/A", developerScore: "N/A", utilityScore: "N/A", marketMaturityScore: "N/A" });
 
     const [amountToConvert, setAmountToConvert] = useState({ currency: coinName, amount: 0 });
-    const [convertedAmount, setConvertedAmount] = useState({ currency: "CAD", amount: 0 });
+    const [convertedAmount, setConvertedAmount] = useState({ currency: "USD", amount: 0 });
     
     useEffect(() => {
 
@@ -62,14 +61,31 @@ export default function CryptoDashboard() {
                 data: {
                     "choice": "DAILY",
                     "currencyFrom": searchItem,
-                    "currencyTo": "CAD"
+                    "currencyTo": "USD"
                 }
             }).then(res => {
                 console.log("DAILY PRICE", res.data);
+
                 const dailySeries = res.data["Time Series (Digital Currency Daily)"]
+
+                // console.log("daily series data :", dailySeries)
                 var series = Object.keys(dailySeries).map(day => {
-                    return { day: day, value: dailySeries[day]["4a. close (CAD)"] }
+                    let value = dailySeries[day]["4. close"];
+                    // console.log("Raw Value:", value); // Log the raw value
+
+                    // console.log(`Closing Price on ${day}:`, value);  // Log the closing price
+            
+                
+                    // Clean up the value by removing any commas or extra spaces
+                    value = value.replace(/,/g, '').trim();  // Removes commas and trims spaces
+                
+                    return { 
+                        day: day, 
+                        value: Number(value)  // Convert cleaned-up string to number
+                    };
                 });
+
+                console.log("Series Data:", series);
 
                 var x_axis = [];
                 var y_axis = [];
@@ -86,6 +102,11 @@ export default function CryptoDashboard() {
                 }
                 x_axis.reverse();
                 y_axis.reverse();
+
+                  // Log the x_axis and y_axis to check values before updating state
+        // console.log("X-axis (Dates):", x_axis);
+        // console.log("Y-axis (Prices):", y_axis);
+
                 setDailyHistory({ x: x_axis, y: y_axis });
 
             });
@@ -100,14 +121,6 @@ export default function CryptoDashboard() {
     }
 
     const getWeeklyPriceHistory = async () => {
-        // try{
-        //     const res = await fetch(`http://localhost:5000/api/protected/vantage-api/getHistory`, config);
-        // console.log("RES from frontend", res);
-        // }catch(err)
-        // {
-        //     console.log("frontend req not sent? : ", err)
-        // }
-
         try {
             await Axios({
                 method: 'post',
@@ -118,13 +131,13 @@ export default function CryptoDashboard() {
                 data: {
                     "choice": "WEEKLY",
                     "currencyFrom": searchItem,
-                    "currencyTo": "CAD"
+                    "currencyTo": "USD"
                 }
             }).then(res => {
-                console.log("WEEKELY PRICE", res.data);
+                // console.log("WEEKELY PRICE", res.data);
                 const weeklySeries = res.data["Time Series (Digital Currency Weekly)"]
                 const series = Object.keys(weeklySeries).map(day => {
-                    return { day: day, value: weeklySeries[day]["4a. close (CAD)"] }
+                    return { day: day, value: weeklySeries[day]["4. close"] }
                 });
                 var x_axis = [];
                 var y_axis = [];
@@ -151,60 +164,46 @@ export default function CryptoDashboard() {
         }
     }
     const getMonthlyPriceHistory = async () => {
-
-        console.log("monthly price"); 
         try {
-            const config = {
-                method: 'POST',
+            await Axios({
+                method: 'post',
+                url: 'http://localhost:5000/api/protected/vantage-api/getHistory',
                 headers: {
-                    Authorization: localStorage.getItem('jwt'),
-                    'Content-Type': 'application/json',
+                    'Authorization': localStorage.getItem('jwt'),
                 },
                 data: {
                     "choice": "MONTHLY",
                     "currencyFrom": searchItem,
-                    "currencyTo": "CAD"
+                    "currencyTo": "USD"
                 }
-            };
-            try{
-                const res = await fetch(`http://localhost:5000/api/protected/vantage-api/getHistory`, config);
+            }).then(res => {
+                // console.log(res.data);
+                const monthlySeries = res.data["Time Series (Digital Currency Monthly)"]
+                const series = Object.keys(monthlySeries).map(day => {
+                    return { day: day, value: monthlySeries[day]["4. close"] }
+                });
+                var x_axis = [];
+                var y_axis = [];
+                var months;
+                if (series.length < 100) {
+                    months = series.length;
+                } else {
+                    months = 100;
+                }
+                for (var index = 0; index < months; index++) {
+                    x_axis.push(series[index].day);
+                    y_axis.push(series[index].value)
 
-            console.log("RES from frontend", res);
-            const data = await res.json();
-            console.log("Data from monthly", data)
+                }
+                x_axis.reverse();
+                y_axis.reverse();
+                setMonthlyHistory({ x: x_axis, y: y_axis });
 
-                console.log("MONTHLY PRICE", res.data);
-            }catch(err)
-            {
-                console.log("frontend req not sent? : ", err)
-            }
-            
-            // const data = await res.json();
-            // console.log("Data from monthly", data)
-       
-            //     console.log("MONTHLY PRICE", res.data);
-            //     const monthlySeries = data["Time Series (Digital Currency Monthly)"]
-            //     const series = Object.keys(monthlySeries).map(day => {
-            //         return { day: day, value: monthlySeries[day]["4a. close (CAD)"] }
-            //     });
-            //     var x_axis = [];
-            //     var y_axis = [];
-            //     var months;
-            //     if (series.length < 100) {
-            //         months = series.length;
-            //     } else {
-            //         months = 100;
-            //     }
-            //     for (var index = 0; index < months; index++) {
-            //         x_axis.push(series[index].day);
-            //         y_axis.push(series[index].value)
 
-            //     }
-            //     x_axis.reverse();
-            //     y_axis.reverse();
-            //     setMonthlyHistory({ x: x_axis, y: y_axis });
-            } catch (err) {
-            console.log("Error from getHistory", err);
+
+            });
+
+        } catch (err) {
             // setError(err.response.data.Error);
             // setErrorModalShow(true);
             // resetGraphs(err);
@@ -231,11 +230,8 @@ export default function CryptoDashboard() {
         setWeeklyHistory({ x: [], y: [] });
         setMonthlyHistory({ x: [], y: [] });
         setAmountToConvert({ amount: 0 });
-        setConvertedAmount({ amount: 0, currency: "CAD" });
-
-      
+        setConvertedAmount({ amount: 0, currency: "USD" });
     }
-
 
     const getHealthIndex = async () => {
 
@@ -259,6 +255,7 @@ export default function CryptoDashboard() {
             });
 
         } catch (err) {
+            console.log(err);
             // console.log(err.response.data.Error+" in health");
 
             // setError(err.response.data.Error);
@@ -276,41 +273,20 @@ export default function CryptoDashboard() {
                 },
                 data: {
                     "currencyFrom": searchItem,
-                    "currencyTo": "CAD"
+                    "currencyTo": "USD"
                 }
             }).then(res => {
                 setExchangeRate(res.data["Realtime Currency Exchange Rate"]["5. Exchange Rate"]);
-                console.log(res.data["Realtime Currency Exchange Rate"]["5. Exchange Rate"]);
+                console.log("exchange rate data:", res.data["Realtime Currency Exchange Rate"]["5. Exchange Rate"]);
             });
 
         } catch (err) {
-            console.log(err.response.data.Error + " in exchange");
+            console.log(err);
+            // console.log(err.response.data.Error + " in exchange");
             // setError(err.response.data.Error);
             // setErrorModalShow(true);
             // resetGraphs(err);
         }
-    }
-    const onSubmit = async (e) => {
-        try {
-            setCoinName(searchItem);
-            setAmountToConvert({ currency: searchItem });
-            e.preventDefault();
-            e.target.reset();
-
-            console.log(coinName);
-            getDailyPriceHistory();
-            getWeeklyPriceHistory();
-            getMonthlyPriceHistory();
-            getHealthIndex();
-            // getExchangeRate();
-            setSearchItem("");
-        } catch (err) {
-            console.log("reach");
-            console.log(err);
-            // setError(err.response.data.Error);
-            // setModalShow(true);
-        }
-
     }
     const swapConversion = () => {
         console.log("REACHHHHHHHHHH in swap");
@@ -321,12 +297,16 @@ export default function CryptoDashboard() {
 
     }
     const convertCurrency = () => {
+        console.log("coinName :::", coinName);
 
         console.log("Search item", searchItem);
         console.log("REACHHHHHHHHHH");
-        // setAmountToConvert({amount:amountToConvert,currency:amountToConvert.currency});
+        setAmountToConvert({amount:amountToConvert,currency:amountToConvert.currency});
+        console.log("Amount to convert", amountToConvert);
+        console.log("Exchange rate", exchangeRate);
+        console.log("Converted amount", amountToConvert);
 
-        if (convertedAmount.currency === "CAD") {
+        if (convertedAmount.currency === "USD") {
             setConvertedAmount({ amount: exchangeRate * amountToConvert.amount, currency: convertedAmount.currency });
         } else {
             console.log("REACHHHHHHHHHH in else");
@@ -336,7 +316,67 @@ export default function CryptoDashboard() {
         }
 
     }
+    // const onSubmit = async (e) => {
+    //     try {
+    //         try{
+    //             setCoinName(searchItem);
+    //         }catch(err){
+    //             console.log("setcoin error", err);
+    //         }
+    //         setAmountToConvert({ currency: searchItem });
+    //         e.preventDefault();
 
+    //         console.log("SEARCH ITEM", searchItem)
+    //         console.log("coinnnammee", coinName);
+    //         e.target.reset();
+
+    //         await getDailyPriceHistory();
+    //         await getWeeklyPriceHistory();
+    //         await getMonthlyPriceHistory();
+    //         // await getHealthIndex();
+    //         await getExchangeRate();
+    //         await swapConversion();
+    //         await convertCurrency();
+
+    //         setSearchItem("");
+    //     } catch (err) {
+    //         console.log("reach");
+    //         console.log(err);
+    //         // setError(err.response.data.Error);
+    //         // setModalShow(true);
+    //     }
+        
+    // }
+
+    const onSubmit = async (e) => {
+        try {
+            setCoinName(searchItem);
+            setAmountToConvert({ currency: searchItem });
+            e.preventDefault();
+    
+            console.log("SEARCH ITEM", searchItem); // This will log the correct searchItem value
+            console.log("COIN NAME SET", coinName)
+    
+            // e.target.reset();  // You can reset the form if needed after processing the form submission
+    
+            await getDailyPriceHistory();
+            await getWeeklyPriceHistory();
+            await getMonthlyPriceHistory();
+            // await getHealthIndex();
+            await getExchangeRate();
+            await swapConversion();
+            await convertCurrency();
+    
+            setSearchItem("");
+        } catch (err) {
+            console.log("Error occurred:", err);
+        }
+    };
+    
+
+    useEffect(() => {
+        console.log("Updated Coin Name:", coinName);
+    }, [coinName]);
     return (
 
         <Container>
@@ -361,13 +401,13 @@ export default function CryptoDashboard() {
                 </Row>
             </form>
             <Row>
-                <Col>
-                    <div className="card conversion-input-card">
-                        <div className="card-body">
+                {/* <Col> */}
+                    <div className="card conversion-input-card text-center">
+                        <div className="card-body flex items-center justify-center h-screen border-2 border-gray-300">
                             <h5 className="card-title text-center">Currency Conversion</h5>
                             <form className="form-signin">
-                                <Row>
-                                    <Col xs={12} >
+                                {/* <Row> */}
+                                    {/* <Col xs={12} > */}
                                         <InputGroup className="mb-3 amount-to-convert">
                                             <FormControl
                                                 placeholder="Amount"
@@ -384,7 +424,7 @@ export default function CryptoDashboard() {
                                                 <InputGroup.Text id="Amount" >{amountToConvert.currency}</InputGroup.Text>
                                             </InputGroup.Append>
                                         </InputGroup>
-                                    </Col>
+                                    {/* </Col> */}
                                     <Col xs={12} >
                                         <Button type="button" className="swap-button" onClick={swapConversion}><img alt="" src="https://www.pngrepo.com/png/55685/180/transfer-arrows.png" width="30px"></img></Button>
                                     </Col>
@@ -404,17 +444,17 @@ export default function CryptoDashboard() {
                                             </InputGroup.Append>
                                         </InputGroup>
                                     </Col>
-                                </Row>
+                                {/* </Row> */}
 
-                                <button className="btn btn-lg btn-primary btn-block text-uppercase input-expense-btn" type="button" onClick={convertCurrency} disabled={!coinName || coinName === "Invalid Coin"}>Convert</button>
+                                <button className="btn btn-lg btn-primary btn-block text-uppercase input-expense-btn" type="button" onClick={convertCurrency}>Convert</button>
 
                             </form>
                         </div>
                     </div>
-                </Col>
-                <Col xs={12} md={6}>
-                    <div className="card health-index-card">
-                        <div className="card-body">
+                {/* </Col> */}
+                {/* <Col xs={12} md={6}> */}
+                    {/* <div className="card health-index-card"> */}
+                        {/* <div className="card-body">
                             <h4 className="card-title text-center">{coinName} Health Index</h4>
                             <h6>Fcas rating: {healthIndex.fcasRating}</h6>
                             <h6>Fcas score: {healthIndex.fcasScore}</h6>
@@ -425,10 +465,9 @@ export default function CryptoDashboard() {
                                 <p>*All scores out of 1000
                             </p>
                             </div>
-                        </div>
-                    </div>
-
-                </Col>
+                        </div> */}
+                    {/* </div> */}
+                {/* </Col> */}
             </Row>
             <Row>
                 <Col xs={12} >
@@ -438,11 +477,11 @@ export default function CryptoDashboard() {
                             labels: dailyHistory.x,
                             datasets: [
                                 {
-                                    label: 'Amount (CAD)',
+                                    label: 'Amount (USD)',
                                     fill: false,
-                                    lineTension: 0,
-                                    backgroundColor: 'rgba(75,192,192,1)',
-                                    borderColor: 'rgba(0,0,0,1)',
+                                    lineTension: 1,
+                                    backgroundColor: 'red',
+                                    borderColor: 'rgba(100,100,100,1)',
                                     borderWidth: 2,
                                     data: dailyHistory.y
                                 }
@@ -480,7 +519,7 @@ export default function CryptoDashboard() {
                             labels: weeklyHistory.x,
                             datasets: [
                                 {
-                                    label: 'Amount (CAD)',
+                                    label: 'Amount (USD)',
                                     fill: false,
                                     lineTension: 0,
                                     backgroundColor: 'rgba(75,192,192,1)',
@@ -519,7 +558,7 @@ export default function CryptoDashboard() {
                             labels: monthlyHistory.x,
                             datasets: [
                                 {
-                                    label: 'Amount (CAD)',
+                                    label: 'Amount (USD)',
                                     fill: false,
                                     lineTension: 0,
                                     backgroundColor: 'rgba(75,192,192,1)',
@@ -554,3 +593,5 @@ export default function CryptoDashboard() {
         </Container>
     );
 }
+
+export default CryptoDashboard;

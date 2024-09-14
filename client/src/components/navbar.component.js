@@ -25,14 +25,13 @@ export default function Login(props) {
                    {!props.isAuthenticated&& <Link to="/login" className="nav-link">Sign in</Link>}
                    {!props.isAuthenticated&&<Link to="/register" className="nav-link">Register</Link>}
                    {props.isAuthenticated&& <Link to="/crypto" className="nav-link" >Crypto Agent</Link>}
+                   {props.isAuthenticated&& <Link to="/chatbot" className="nav-link" >Crypto ChatBot</Link>}
 
                     {props.isAuthenticated&& <Link to="/" className="nav-link" onClick={logout}>Sign Out</Link>}
 
                 </Nav>
             </Navbar.Collapse>
         </Navbar>
-
-
     );
 
    
